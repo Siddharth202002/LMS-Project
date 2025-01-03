@@ -117,10 +117,56 @@ const deleteCourse = async (req, res, next) => {
   }
 };
 
+const addLectureToCourseById = async (req, res, next) => {
+  try {
+    const { title, description } = req.body;
+    if (!title || !description) {
+      return next(new AppError("All fields are required", 400));
+    }
+    const { id } = req.params;
+    const course = await Course.findById(id);
+    if (!course) {
+      return next(new AppError("Invalild Course Id", 400));
+    }
+
+    const lectureData = {
+      title,
+      description,
+      lecture: {
+        public_id: "hey",
+        secure_url: "hey",
+      },
+    };
+
+    if (req.file) {
+      const result = await cloudinary.v2.uploader.upload(req.file.path, {
+        folder: "lms",
+      });
+      if (result) {
+        lectureData.lecture.public_id = result.public_id;
+        lectureData.lecture.secure_url = result.secure_url;
+      }
+    }
+
+    fs.rm(`uploads/${req.file.filename}`);
+    course.lectures.push(lectureData);
+    course.numberOfLectures = course.lectures.length;
+    await course.save();
+    res.status(200).json({
+      success: true,
+      message: "Lecture successfully added to the course",
+      course,
+    });
+  } catch (error) {
+    return next(new AppError(error.message, 500));
+  }
+};
+
 export {
   getAllCourses,
   getLecturesByCourseId,
   createCourse,
   updateCourse,
   deleteCourse,
+  addLectureToCourseById,
 };

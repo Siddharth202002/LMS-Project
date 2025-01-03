@@ -71,12 +71,12 @@ const login = async (req, res, next) => {
   try {
     const { email, password } = req.body;
     if (!email || !password) {
-      return next(AppError("All fields are required", 400));
+      return next(new AppError("All fields are required", 400));
     }
     const user = await User.findOne({ email }).select("+password");
 
     if (!user || !user.comparePassword(password)) {
-      return next(AppError("User not found!"));
+      return next(new AppError("User not found!"));
     }
     const token = await user.generateJWToken();
     res.cookie("token", token, cookieOptions);
@@ -111,7 +111,7 @@ const getProfile = async (req, res) => {
       user,
     });
   } catch (error) {
-    return next(AppError("Failed to fetch user profile", 500));
+    return next(new AppError("Failed to fetch user profile", 500));
   }
 };
 
